@@ -29,6 +29,24 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
+// Load .env / .env.production ourselves (no dependency) so config is present no
+// matter how the process is started (pm2 doesn't auto-read .env files). A real
+// already-set env var always wins; an empty/missing one is filled from the file.
+(function loadEnv() {
+  for (const f of ['.env', '.env.production']) {
+    try {
+      const p = path.join(__dirname, f);
+      if (!fs.existsSync(p)) continue;
+      for (const line of fs.readFileSync(p, 'utf8').split(/\r?\n/)) {
+        const t = line.trim();
+        if (!t || t.startsWith('#')) continue;
+        const i = t.indexOf('=');
+        if (i > 0) { const k = t.slice(0, i).trim(); if (!process.env[k]) process.env[k] = t.slice(i + 1).trim(); }
+      }
+    } catch { /* ignore */ }
+  }
+})();
+
 const PORT = parseInt(process.env.PORT || '4030', 10);
 const TOKEN = process.env.BLOB_TOKEN || '';
 const PUBLIC_BASE = (process.env.BLOB_PUBLIC_BASE || 'https://blob.pipee.tw').replace(/\/+$/, '');
