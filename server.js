@@ -29,9 +29,10 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-// Load .env / .env.production ourselves (no dependency) so config is present no
-// matter how the process is started (pm2 doesn't auto-read .env files). A real
-// already-set env var always wins; an empty/missing one is filled from the file.
+// Load .env then .env.production ourselves (no dependency) so config is present
+// no matter how the process is started (pm2 doesn't auto-read .env files, and a
+// plain `pm2 restart` keeps a stale injected env). The on-disk file is the
+// source of truth, so it OVERRIDES — .env.production wins last (cloudpipe's file).
 (function loadEnv() {
   for (const f of ['.env', '.env.production']) {
     try {
@@ -41,7 +42,7 @@ const path = require('path');
         const t = line.trim();
         if (!t || t.startsWith('#')) continue;
         const i = t.indexOf('=');
-        if (i > 0) { const k = t.slice(0, i).trim(); if (!process.env[k]) process.env[k] = t.slice(i + 1).trim(); }
+        if (i > 0) process.env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
       }
     } catch { /* ignore */ }
   }
@@ -184,4 +185,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[blobstore] listening on :${PORT} (public ${PUBLIC_BASE}, max ${MAX_SIZE} bytes)`);
+  console.log(`[blobstore] DIAG dir=${__dirname} tokenLen=${TOKEN.length} envExists=${fs.existsSync(path.join(__dirname, '.env'))} prodExists=${fs.existsSync(path.join(__dirname, '.env.production'))}`);
 });
