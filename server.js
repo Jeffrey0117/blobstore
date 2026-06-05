@@ -185,5 +185,4 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[blobstore] listening on :${PORT} (public ${PUBLIC_BASE}, max ${MAX_SIZE} bytes)`);
-  console.log(`[blobstore] DIAG dir=${__dirname} tokenLen=${TOKEN.length} envExists=${fs.existsSync(path.join(__dirname, '.env'))} prodExists=${fs.existsSync(path.join(__dirname, '.env.production'))}`);
 });
